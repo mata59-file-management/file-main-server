@@ -1,58 +1,66 @@
+
 import socket
-import tqdm
-import os
 
-# device's IP address
-SERVER_HOST = "127.0.0.1"
-SERVER_PORT = 5001
-# receive 4096 bytes each time
-BUFFER_SIZE = 4096
-SEPARATOR = "<SEPARATOR>"
+IP = socket.gethostbyname(socket.gethostname())
+PORT = 4455
+ADDRESS = (IP, PORT)
 
-# create the server socket
-# TCP socket
-s = socket.socket()
+SIZE = 1024
+FORMAT = "utf-8"
 
-# bind the socket to our local address
-s.bind((SERVER_HOST, SERVER_PORT))
 
-# enabling our server to accept connections
-# 5 here is the number of unaccepted connections that
-# the system will allow before refusing new connections
-s.listen(5)
-print(f"[*] Listening as {SERVER_HOST}:{SERVER_PORT}")
+def main():
+    print("[STARTING] Server is starting.")
+    """ Staring a TCP socket. """
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# accept connection if there is any
-client_socket, address = s.accept() 
-# if below code is executed, that means the sender is connected
-print(f"[+] {address} is connected.")
+    """ Bind the IP and PORT to the server. """
+    server.bind(ADDRESS)
 
-# receive the file infos
-# receive using client socket, not server socket
-received = client_socket.recv(BUFFER_SIZE).decode()
-filename, filesize = received.split(SEPARATOR)
-# remove absolute path if there is
-filename = os.path.basename(filename)
-# convert to integer
-filesize = int(filesize)
+    """ Server is listening, i.e., server is now waiting for the client to connected. """
+    server.listen()
+    print("[LISTENING] Server is listening.")
 
-# start receiving the file from the socket
-# and writing to the file stream
-progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
-with open(filename, "wb") as f:
     while True:
-        # read 1024 bytes from the socket (receive)
-        bytes_read = client_socket.recv(BUFFER_SIZE)
-        if not bytes_read:    
-            # nothing is received
-            # file transmitting is done
-            break
-        # write to the file the bytes we just received
-        f.write(bytes_read)
-        # update the progress bar
-        progress.update(len(bytes_read))
+        """ Server has accepted the connection from the client. """
+        conn, addr = server.accept()
+        print(f"[NEW CONNECTION] {addr} connected.")
 
-# close the client socket
-client_socket.close()
-# close the server socket
-s.close()
+        """ Receiving the filename from the client. """
+        filename = conn.recv(SIZE).decode(FORMAT)
+        print(f"[RECV] Receiving the filename: {filename}")
+
+        if filename:
+            file = open(filename, "w")
+            conn.send("Filename received.".encode(FORMAT))
+
+            """ Receiving the file data from the client. """
+            data = conn.recv(SIZE).decode(FORMAT)
+            print(f"[RECV] Receiving the file data.")
+            file.write(data)
+            conn.send("File data received".encode(FORMAT))
+
+            """ Closing the file. """
+            file.close()
+
+            """ Receiving the fault tolerance level for the file """
+            tolerance_level = conn.recv(SIZE).decode(FORMAT)
+            print(
+                f"[RECV] Receiving the fault tolerance level ({tolerance_level}).")
+            # print(f"FAULT TOLERANCE: {tolerance_level}")
+            conn.send(
+                f"Fault tolerance level received ({tolerance_level}).".encode(FORMAT))
+
+            """ In here we'll send the file to N sattelite servers """
+
+        else:
+            print("Arquivo inválido enviado pelo cliente!")
+
+        """ Closing the connection from the client. """
+        conn.close()
+        print(f"[DISCONNECTED] {addr} disconnected.")
+        print("[LISTENING] Server is listening again.")
+
+
+if __name__ == "__main__":
+    main()
