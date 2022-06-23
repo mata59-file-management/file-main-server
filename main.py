@@ -1,57 +1,28 @@
-
 import socket
-
-IP = socket.gethostbyname(socket.gethostname())
-PORT = 4455
-ADDRESS = (IP, PORT)
-
-SIZE = 1024
-FORMAT = "utf-8"
+import os
+from client_connection import receive_file_from_client
+from satellite_connection import send_file_to_satellites
+from constants import CLIENT_ADDRESS, SATELLITE_ADDRESS, SIZE, FORMAT
 
 
 def main():
     print("[STARTING] Server is starting.")
     """ Staring a TCP socket. """
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    """ Bind the IP and PORT to the server. """
-    server.bind(ADDRESS)
+    """ Bind the CLIENT_IP and CLIENT_PORT to the server_client. """
+    server_client.bind(CLIENT_ADDRESS)
 
-    """ Server is listening, i.e., server is now waiting for the client to connected. """
-    server.listen()
+    """ Server is listening, i.e., server_client is now waiting for the client to connected. """
+    server_client.listen()
     print("[LISTENING] Server is listening.")
 
     while True:
-        """ Server has accepted the connection from the client. """
-        conn, addr = server.accept()
-        print(f"[NEW CONNECTION] {addr} connected.")
-
-        """ Receiving the filename from the client. """
-        filename = conn.recv(SIZE).decode(FORMAT)
-        print(f"[RECV] Receiving the filename: {filename}")
-
+        filename, tolerance_level, conn, addr = receive_file_from_client(
+            server_client)
         if filename:
-            file = open(filename, "w")
-            conn.send("Filename received.".encode(FORMAT))
-
-            """ Receiving the file data from the client. """
-            data = conn.recv(SIZE).decode(FORMAT)
-            print(f"[RECV] Receiving the file data.")
-            file.write(data)
-            conn.send("File data received".encode(FORMAT))
-
-            """ Closing the file. """
-            file.close()
-
-            """ Receiving the fault tolerance level for the file """
-            tolerance_level = conn.recv(SIZE).decode(FORMAT)
-            print(
-                f"[RECV] Receiving the fault tolerance level ({tolerance_level}).")
-            # print(f"FAULT TOLERANCE: {tolerance_level}")
-            conn.send(
-                f"Fault tolerance level received ({tolerance_level}).".encode(FORMAT))
-
-            """ In here we'll send the file to N sattelite servers """
+            # A partir deste ponto começaremos a enviar o arquivo para os N servidores satelites """
+            send_file_to_satellites(filename, tolerance_level)
 
         else:
             print("Arquivo inválido enviado pelo cliente!")
