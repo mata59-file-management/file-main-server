@@ -21,7 +21,7 @@ def main():
         filename, tolerance_level, conn, addr = receive_file_from_client(
             server_client)
         if filename:
-            # A partir deste ponto começaremos a enviar o arquivo para os N servidores satelites """
+            # Enviar o arquivo para os N servidores satelites """
             send_file_to_satellites(filename, tolerance_level)
 
         else:
