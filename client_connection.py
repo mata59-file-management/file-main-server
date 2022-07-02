@@ -1,9 +1,41 @@
-from constants import SIZE, FORMAT
+from constants import DEPOSIT_ID, RETRIEVE_ID, SIZE, FORMAT
+from satellite_connection import send_file_to_satellites
 
-def receive_file_from_client(server_client):
-    conn, addr = server_client.accept()
-    print(f"[NEW CONNECTION] {addr} connected.")
+def accept_client_connection(server):
+    conn, addr = server.accept()
+    print(f"# {addr} connected #")
 
+    # Receive operation identifier (retrieve or withdraw)
+    operation_id = conn.recv(SIZE).decode(FORMAT)
+    print(f"# Receiving the operation id {operation_id} #")
+    conn.send("# Operation id received #".encode(FORMAT))
+
+    if operation_id == DEPOSIT_ID:
+        handle_deposit(conn)
+    elif operation_id == RETRIEVE_ID:
+        print("em construção...")
+
+    # Closing the connection with the client
+    conn.close()
+    print(f"# {addr} disconnected #")
+    print("# Server is listening again #")
+
+def handle_deposit(conn):
+    filename, tolerance_level = receive_file_from_client(
+            conn)
+    if filename:
+        # Enviar o arquivo para os N servidores satelites """
+        send_file_to_satellites(filename, tolerance_level)
+
+    else:
+        print("# Arquivo inválido enviado pelo cliente! #")
+
+def handle_retrieve(conn):
+    # A FAZER
+    # filename = receive_file_name_from_client(conn)
+    return
+
+def receive_file_from_client(conn):
     """ Receiving the filename from the client. """
     filename = conn.recv(SIZE).decode(FORMAT)
     print(f"[RECV] Receiving the filename: {filename}")
@@ -28,4 +60,4 @@ def receive_file_from_client(server_client):
         # print(f"FAULT TOLERANCE: {tolerance_level}")
         conn.send(
             f"Fault tolerance level received ({tolerance_level}).".encode(FORMAT))
-    return filename, tolerance_level, conn, addr
+    return filename, tolerance_level
