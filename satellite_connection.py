@@ -1,9 +1,11 @@
 import socket
 import os
-from constants import DEPOSIT_ID, FORMAT, MAX_SATELLITE_INSTANCES, RETRIEVE_ID, SATELLITE_IP, SATELLITE_BASE_PORT, SIZE
+from constants import DELETE_ID, DEPOSIT_ID, FORMAT, MAX_SATELLITE_INSTANCES, RETRIEVE_ID, SATELLITE_IP, SATELLITE_BASE_PORT, SIZE
 
 
 def send_file_to_satellites(filename, tolerance_level):
+    delete_file_from_satellites(filename)
+
     send_count = 0
     for i in range(0, int(tolerance_level)):
         server_satellite = socket.socket(
@@ -90,3 +92,34 @@ def retrieve_file_from_satellites(filename):
         # Closing the connection from the satellite server_satellite
     server_satellite.close()
     return None
+
+def delete_file_from_satellites(filename):
+    for i in range(0, int(MAX_SATELLITE_INSTANCES)):
+        server_satellite = socket.socket(
+            socket.AF_INET, socket.SOCK_STREAM)
+        port = SATELLITE_BASE_PORT + i
+        satellite_address = (SATELLITE_IP, port)
+        try:
+            server_satellite.connect(satellite_address)
+
+            # Sending the operation identifier to the satellite server
+            server_satellite.send(DELETE_ID.encode(FORMAT))
+            msg = server_satellite.recv(SIZE).decode(FORMAT)
+            print(f"# Satellite Server: {msg}")
+
+            # Sending the file name to the satellite server
+            server_satellite.send(filename.encode(FORMAT))
+            msg = server_satellite.recv(SIZE).decode(FORMAT)
+            print(f"# Satellite Server: {msg}")
+
+            #Receiving result of delete operation
+            msg = server_satellite.recv(SIZE).decode(FORMAT)
+            server_satellite.send("OK".encode(FORMAT))
+            print(f"# Satellite Server: {msg}")
+
+        except:
+            server_satellite.close()
+            break
+
+        # """ Closing the connection from the satellite server_satellite. """
+        server_satellite.close()
