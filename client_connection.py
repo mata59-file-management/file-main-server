@@ -23,14 +23,17 @@ def accept_client_connection(server):
 
 
 def handle_deposit(conn):
-    """ Receiving the filename from the client. """
+
+    print("# Deposit operation began... #")
+
+    # Receiving the filename from the client
     filename = conn.recv(SIZE).decode(FORMAT)
     print(f"# Receiving the filename: {filename} #")
 
     file = open(filename, "wb")
     conn.send("Filename received.".encode(FORMAT))
 
-    """ Receiving the file data from the client. """
+    # Receiving the file data from the client
     data = conn.recv(SIZE)
     print(f"# Receiving the file data #")
     file.write(data)
@@ -42,7 +45,7 @@ def handle_deposit(conn):
     # Receiving the fault tolerance level for the file
     tolerance_level = conn.recv(SIZE).decode(FORMAT)
     print(
-        f"[RECV] Receiving the fault tolerance level ({tolerance_level}).")
+        f"# Receiving the fault tolerance level ({tolerance_level}) #")
     conn.send(
         f"Fault tolerance level received ({tolerance_level}).".encode(FORMAT))
 

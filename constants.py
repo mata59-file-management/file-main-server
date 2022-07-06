@@ -10,7 +10,6 @@ MAX_SATELLITE_INSTANCES = 5
 
 SIZE = 262144 # 72kb
 FORMAT = "utf-8"
-# FORMAT = "mbcs"
 
 DEPOSIT_ID = "deposit"
 RETRIEVE_ID = "retrieve"

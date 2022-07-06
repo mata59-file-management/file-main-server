@@ -11,9 +11,12 @@ def send_file_to_satellites(filename, tolerance_level):
         server_satellite = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)
         port = SATELLITE_BASE_PORT + i
+        print(f"# Tentando se conectar à porta {port}... #")
         satellite_address = (SATELLITE_IP, port)
         try:
             server_satellite.connect(satellite_address)
+
+            print("# Sucesso! #")
 
             file = open(f"{filename}", "rb")
             data = file.read()
@@ -33,7 +36,7 @@ def send_file_to_satellites(filename, tolerance_level):
             msg = server_satellite.recv(SIZE).decode(FORMAT)
             print(f"# Satellite Server: {msg}")
 
-            """ Closing the file. """
+            # Closing the file
             file.close()
             send_count = send_count + 1
 
@@ -43,23 +46,26 @@ def send_file_to_satellites(filename, tolerance_level):
             server_satellite.close()
             break
 
-        # """ Closing the connection from the satellite server_satellite. """
+        # Closing the connection from the satellite server_satellite
         server_satellite.close()
-
-    # Removendo arquivo do servidor principal, após ter enviado as N cópias
+        
+    # Removing the file from the main server, after sending the N copies
     os.remove(filename)
 
 def retrieve_file_from_satellites(filename):
     retrieve_count = 0
-    # success_flag = False
     for i in range(0, MAX_SATELLITE_INSTANCES):
+        
         server_satellite = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)
         port = SATELLITE_BASE_PORT + i
-        print("Valor de port:", port)
+        print(f"# Tentando se conectar à porta {port}... #")
         satellite_address = (SATELLITE_IP, port)
+
         try:
             server_satellite.connect(satellite_address)
+
+            print("# Sucesso! #")
 
             # Sending the operation identifier to the satellite server
             server_satellite.send(RETRIEVE_ID.encode(FORMAT))
@@ -95,10 +101,12 @@ def retrieve_file_from_satellites(filename):
 
 def delete_file_from_satellites(filename):
     for i in range(0, int(MAX_SATELLITE_INSTANCES)):
+
         server_satellite = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)
         port = SATELLITE_BASE_PORT + i
         satellite_address = (SATELLITE_IP, port)
+
         try:
             server_satellite.connect(satellite_address)
 
@@ -121,5 +129,5 @@ def delete_file_from_satellites(filename):
             server_satellite.close()
             break
 
-        # """ Closing the connection from the satellite server_satellite. """
+        # Closing the connection from the satellite server_satellite
         server_satellite.close()
